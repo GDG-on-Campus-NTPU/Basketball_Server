@@ -13,6 +13,11 @@ export default defineEventHandler(async (event) => {
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const table: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
+  const failEntries: {
+    row: number;
+    reason: string;
+  }[] = [];
+
   const playerToContestData: {
     playerId: number;
     contestId: number;
@@ -26,31 +31,10 @@ export default defineEventHandler(async (event) => {
   const winTeam = row[5];
   const date = row[7];
 
-  if (!date || typeof date !== 'string' || isNaN(Date.parse(date))) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Invalid or missing date.',
-    });
-  }
-  
-  if (!teamname || typeof teamname !== 'string') {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Team name must be a non-empty string.',
-    });
-  }
-  
-  if (!opposingTeam || typeof opposingTeam !== 'string') {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Opposing team name must be a non-empty string.',
-    });
-  }
-  
-  if (!winTeam || typeof winTeam !== 'string') {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Winning team name must be a non-empty string.',
+  if (!date || !teamname || !opposingTeam || !winTeam) {
+    failEntries.push({
+      row: 0,
+      reason: 'Missing required fields.',
     });
   }
 
@@ -77,16 +61,12 @@ export default defineEventHandler(async (event) => {
     where: { name: teamname },
   });
 
-  const winTeamRecord = await prisma.team.findFirst({
-    where: { name: winTeam },
-  });
-
   let players: { id: number; name: string }[] = [];
 
   if (!team) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: `Team ${teamname} not found.`,
+    failEntries.push({
+      row: 0,
+      reason: `Team ${teamname} not found.`,
     });
   }
   else {
@@ -95,13 +75,6 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  if (!winTeamRecord) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: `Winning team ${winTeam} not found in database.`,
-    });
-  }
-  
   players.forEach((player) => {
     playerToContestData.push({
       playerId: player.id,
@@ -109,9 +82,13 @@ export default defineEventHandler(async (event) => {
     });
   });
 
+  await prisma.player_to_contest.createMany({
+    data: playerToContestData,
+  });
+
   const playerMap = new Map(players.map((player) => [player.name, player.id]));
 
-  for (let i = 2; i < table.length; i++) {
+  for (let i = 1; i < table.length; i++) {
     const row = table[i];
     const starting = row[0];
     const playerName = row[2];
@@ -130,45 +107,37 @@ export default defineEventHandler(async (event) => {
     const mistake = row[15];
     const score = row[16];
 
-    if (!playerName || typeof playerName !== 'string') {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Player name (column 3) must be a string.',
+    if (
+      !playerName ||
+      !two_point_made ||
+      !two_point_missed ||
+      !three_point_made ||
+      !three_point_missed ||
+      !free_throw_made ||
+      !free_throw_missed ||
+      !rebound_offensive ||
+      !rebound_defensive ||
+      !block ||
+      !steal ||
+      !assist ||
+      !foul ||
+      !mistake ||
+      !score
+    ) {
+      failEntries.push({
+        row: i,
+        reason: 'Missing required fields.',
       });
+      continue;
     }
-
-    const numericFields = [
-      two_point_made,
-      two_point_missed,
-      three_point_made,
-      three_point_missed,
-      free_throw_made,
-      free_throw_missed,
-      rebound_offensive,
-      rebound_defensive,
-      block,
-      steal,
-      assist,
-      foul,
-      mistake,
-      score,
-    ];
-
-    numericFields.forEach((field, index) => {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `Column ${index + 4} must be an integer or null.`,
-      });
-    });
-
-    const isStarting = starting ? Boolean(starting) : false;
 
     const playerId = playerMap.get(playerName);
     if (!playerId) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `Player ${playerName} not found in team ${teamname}.`,  
-      }); 
+      failEntries.push({
+        row: i,
+        reason: `Player ${playerName} not found in team ${teamname}.`,
+      });
+      continue;
     }
 
     performanceData.push({
@@ -196,13 +165,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await prisma.player_to_contest.createMany({
-    data: playerToContestData
+  const createdPerformances = await prisma.performance.createMany({
+    data: performanceData,
   });
 
-  await prisma.performance.createMany({
-    data: performanceData
-  });
-
-  setResponseStatus(event, 200);
+setResponseStatus(event, 200);
+return {
+  failEntries,
+  message: 'Upload successful.',
+};
 });
