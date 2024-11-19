@@ -42,7 +42,9 @@ model Player {
 
 model Performance{
   id    Int    @id @default(autoincrement())
-  playerId Int //學號
+  starting Boolean
+  playerId Int //背號
+  name String
   two_point_made Int 
   two_point_missed Int
   three_point_made Int
@@ -62,12 +64,16 @@ model Performance{
 
 model Team{
   id    Int    @id @default(autoincrement())
-  name String
+  name String @unique
   player Player[]
 }
 
 model Contest{
   id    Int    @id @default(autoincrement())
+  teamname String
+  opposingTeam String
+  winTeam String
+  date Int
   player_to_contest Player_to_contest[]
 }
 
