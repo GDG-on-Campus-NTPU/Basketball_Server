@@ -32,7 +32,6 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    // 新增隊伍資料
     const newTeam = await prisma.team.create({
         data: { name },
         select: {
@@ -41,7 +40,6 @@ export default defineEventHandler(async (event) => {
         }
     });
 
-    // 返回成功響應
     return {
         message: 'Team created successfully',
         team: newTeam
