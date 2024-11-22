@@ -55,22 +55,27 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const newPlayer = await prisma.player.create({
-        data: {
-            name,
-            number,
-            teamId,
-            userid: userId
+    const newPlayer = await prisma.player.upsert({
+        where: {
+            userid: userId, 
+        },
+        update: {
+            name: name,
+            number: number,
+            teamId: teamId,
+        },
+        create: {
+            name: name,
+            number: number,
+            teamId: teamId,
+            userid: userId,
         },
         select: {
             id: true,
             name: true,
-            number: true,
-            teamId: true,
-            userid: true
-        }
+        },
     });
-
+    
     return {
         message: 'Player created successfully',
         player: newPlayer

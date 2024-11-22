@@ -1,5 +1,5 @@
 import prisma from '~~/lib/prisma';
-import XLSX from 'xlsx';
+import * as XLSX from 'xlsx';
 
 export default defineEventHandler(async (event) => {
   const formData = await readMultipartFormData(event);
