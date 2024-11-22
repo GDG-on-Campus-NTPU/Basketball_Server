@@ -32,13 +32,22 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const newTeam = await prisma.team.create({
-        data: { name },
+    const newTeam = await prisma.team.upsert({
+        where: {
+            name: name, 
+        },
+        update: {
+            name: name,
+        },
+        create: {
+            name: name,
+        },
         select: {
             id: true,
-            name: true
-        }
+            name: true,
+        },
     });
+    
 
     return {
         message: 'Team created successfully',
