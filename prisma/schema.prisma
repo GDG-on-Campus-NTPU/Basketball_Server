@@ -35,9 +35,9 @@ model Player {
   number Int //背號
   player_to_contest Player_to_contest[]
   teamId Int //外鍵
-  userid Int @unique
+  userId Int @unique
   team Team @relation(fields: [teamId], references: [id])
-  user User @relation(fields: [userid], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Performance{
