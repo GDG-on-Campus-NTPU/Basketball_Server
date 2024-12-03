@@ -80,9 +80,9 @@ model Contest{
 model Player_to_contest{
   id    Int    @id @default(autoincrement())
   playerId     Int
-  player       Player      @relation(fields: [playerId], references: [id])
+  player       Player      @relation(fields: [playerId], references: [id], onDelete: Cascade)
   performanceId Int? @unique
-  performance   Performance? @relation(fields: [performanceId], references: [id])
+  performance   Performance? @relation(fields: [performanceId], references: [id], onDelete: Cascade)
   contestId    Int
   contest      Contest      @relation(fields: [contestId], references: [id])
   @@unique([playerId, contestId])
