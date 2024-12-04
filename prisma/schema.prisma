@@ -36,9 +36,8 @@ model Player {
   number Int //背號
   player_to_contest Player_to_contest[]
   teamId Int //外鍵
-  userId Int @unique
   team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [id], references: [id]) // id 同時作為userId與playerId
 }
 
 model Performance{
