@@ -32,21 +32,21 @@ export default defineEventHandler(async (event) => {
       statusMessage: 'Invalid or missing date.',
     });
   }
-  
+
   if (!teamname || typeof teamname !== 'string') {
     throw createError({
       statusCode: 400,
       statusMessage: 'Team name must be a non-empty string.',
     });
   }
-  
+
   if (!opposingTeam || typeof opposingTeam !== 'string') {
     throw createError({
       statusCode: 400,
       statusMessage: 'Opposing team name must be a non-empty string.',
     });
   }
-  
+
   if (!winTeam || typeof winTeam !== 'string') {
     throw createError({
       statusCode: 400,
@@ -81,6 +81,22 @@ export default defineEventHandler(async (event) => {
     where: { name: winTeam },
   });
 
+  const loseTeamRecord = await prisma.team.findFirst({
+    where: { name: teamname === winTeam ? opposingTeam : teamname },
+  });
+
+  if (winTeamRecord && loseTeamRecord) {
+    await prisma.team.update({
+      where: { id: winTeamRecord.id },
+      data: { win: { increment: 1 } },
+    });
+
+    await prisma.team.update({
+      where: { id: loseTeamRecord.id },
+      data: { lose: { increment: 1 } }, 
+    });
+  }
+
   let players: { id: number; name: string }[] = [];
 
   if (!team) {
@@ -101,7 +117,7 @@ export default defineEventHandler(async (event) => {
       statusMessage: `Winning team ${winTeam} not found in database.`,
     });
   }
-  
+
   players.forEach((player) => {
     playerToContestData.push({
       playerId: player.id,
@@ -167,8 +183,8 @@ export default defineEventHandler(async (event) => {
     if (!playerId) {
       throw createError({
         statusCode: 400,
-        statusMessage: `Player ${playerName} not found in team ${teamname}.`,  
-      }); 
+        statusMessage: `Player ${playerName} not found in team ${teamname}.`,
+      });
     }
 
     performanceData.push({

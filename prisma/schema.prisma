@@ -64,6 +64,8 @@ model Performance{
 
 model Team{
   id    Int    @id @default(autoincrement())
+  win Int
+  lose Int
   name String @unique
   player Player[]
 }
@@ -80,9 +82,10 @@ model Contest{
 model Player_to_contest{
   id    Int    @id @default(autoincrement())
   playerId     Int
-  player       Player      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  player       Player      @relation(fields: [playerId], references: [id])
   performanceId Int? @unique
-  performance   Performance? @relation(fields: [performanceId], references: [id], onDelete: Cascade)
+  performance   Performance? @relation(fields: [performanceId], references: [id])
   contestId    Int
   contest      Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  @@unique([playerId, contestId])
 }
