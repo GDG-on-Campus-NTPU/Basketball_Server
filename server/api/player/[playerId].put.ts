@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const existingPlayer = await prisma.player.findUnique({
-        where: { userid: userId },
+        where: { id: userId },
         select: { id: true }
     });
 
@@ -57,22 +57,20 @@ export default defineEventHandler(async (event) => {
 
     const newPlayer = await prisma.player.upsert({
         where: {
-            userid: userId, 
+            id: userId, 
         },
-        update: {
-            name: name,
-            number: number,
-            teamId: teamId,
-        },
+        update: {},
         create: {
             name: name,
             number: number,
             teamId: teamId,
-            userid: userId,
+            id: userId,
         },
         select: {
             id: true,
             name: true,
+            number: true,
+            teamId: true,
         },
     });
     

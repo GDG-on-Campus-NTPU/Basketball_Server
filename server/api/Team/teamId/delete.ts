@@ -1,6 +1,6 @@
 import prisma from '~~/lib/prisma';
 export default defineEventHandler(async (event) => {
-    const { teamId } = getQuery(event) as { teamId: string | undefined };
+    const teamId = getRouterParam(event,  'teamId')
     if (!teamId || isNaN(parseInt(teamId))) {
         throw createError({
             statusCode: 400,

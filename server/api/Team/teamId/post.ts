@@ -36,15 +36,17 @@ export default defineEventHandler(async (event) => {
         where: {
             name: name, 
         },
-        update: {
-            name: name,
-        },
+        update: {},
         create: {
             name: name,
+            win: 0,
+            lose: 0,
         },
         select: {
             id: true,
             name: true,
+            win: true,
+            lose: true,
         },
     });
     
