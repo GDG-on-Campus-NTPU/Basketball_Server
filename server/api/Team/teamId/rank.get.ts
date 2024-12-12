@@ -25,11 +25,6 @@ export default defineEventHandler(async (event) => {
             statusMessage: 'Success',
             data: rankingTable,
         };
-    } catch (error) {
-        console.error('Error generating rankings:', error);
-        throw createError({
-            statusCode: 500,
-            statusMessage: 'Internal Server Error',
-        });
-    }
 });
+
+不要添加沒意義的try catch
