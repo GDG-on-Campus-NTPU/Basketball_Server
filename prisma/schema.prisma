@@ -36,13 +36,15 @@ model Player {
   number Int //背號
   player_to_contest Player_to_contest[]
   teamId Int //外鍵
-  team Team @relation(fields: [teamId], references: [id])
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
   user User @relation(fields: [id], references: [id]) // id 同時作為userId與playerId
 }
 
 model Performance{
   id    Int    @id @default(autoincrement())
-  playerId Int //學號
+  starting Boolean
+  playerId Int //背號
+  name String
   two_point_made Int 
   two_point_missed Int
   three_point_made Int
@@ -62,12 +64,18 @@ model Performance{
 
 model Team{
   id    Int    @id @default(autoincrement())
-  name String
+  win Int
+  lose Int
+  name String @unique
   player Player[]
 }
 
 model Contest{
   id    Int    @id @default(autoincrement())
+  teamname String
+  opposingTeam String
+  winTeam String
+  date Int
   player_to_contest Player_to_contest[]
 }
 
@@ -78,6 +86,6 @@ model Player_to_contest{
   performanceId Int? @unique
   performance   Performance? @relation(fields: [performanceId], references: [id])
   contestId    Int
-  contest      Contest      @relation(fields: [contestId], references: [id])
+  contest      Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
   @@unique([playerId, contestId])
 }
