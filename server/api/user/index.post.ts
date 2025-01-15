@@ -53,12 +53,5 @@ export default defineEventHandler(async (event) => {
         }
     });
 
-    return {
-        statusCode: 201,
-        body: {
-            id: newUser.id,
-            name: newUser.name,
-            email: newUser.email
-        }
-    };
+    return newUser;
 });

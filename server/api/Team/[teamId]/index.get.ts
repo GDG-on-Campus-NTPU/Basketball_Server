@@ -1,9 +1,5 @@
 import prisma from '~~/lib/prisma';
-import { checkLogin } from '~~/lib/util';
 export default defineEventHandler(async (event) => {
-    checkLogin(event);
-
-
     const teamId = getRouterParam(event, 'teamId')
     
     if (!teamId || isNaN(parseInt(teamId))) {
@@ -14,11 +10,23 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    await prisma.team.delete({
+    const result = await prisma.team.findUnique({
         where: { id: parseInt(teamId) },
-        select: null,
+        select: {
+            id: true,
+            name: true,
+            win: true,
+            lose: true,
+        }
     });
 
-    setResponseStatus(event, 204);
-    return null;
+    if(!result){
+        throw createError({
+            statusCode: 404,
+            statusMessage: 'Not Found',
+            message: `Team with ID ${teamId} does not exist.`,
+        });
+    }
+
+    return result;
 })

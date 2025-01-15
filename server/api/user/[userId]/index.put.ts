@@ -1,7 +1,9 @@
 import prisma from '~~/lib/prisma';
-import { isVaildEmail, isVaildName } from '~~/lib/util';
+import { checkLogin, isVaildEmail, isVaildName } from '~~/lib/util';
 
 export default defineEventHandler(async (event) => {
+    checkLogin(event);
+    
     const userIdStr = getRouterParam(event, 'userId');
 
     if (userIdStr == undefined || isNaN(parseInt(userIdStr)) || isNaN(Number(userIdStr))) {
@@ -12,6 +14,13 @@ export default defineEventHandler(async (event) => {
     }
 
     const userId = parseInt(userIdStr);
+
+    if(event.context.userId != userId){
+        throw createError({
+            statusCode: 403,
+            message: 'Forbidden'
+        })
+    }
 
     const user = await prisma.user.findUnique({
         where: {
@@ -29,12 +38,7 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    if(event.context.userId != userId){
-        throw createError({
-            statusCode: 403,
-            message: 'Forbidden'
-        })
-    }
+    
 
     const { name, email } = await readBody(event) as {
         name: string | undefined,

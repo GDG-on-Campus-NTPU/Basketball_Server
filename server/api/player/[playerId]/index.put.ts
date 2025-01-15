@@ -1,7 +1,9 @@
 import prisma from '~~/lib/prisma';
-import { isVaildName } from '~~/lib/util';
+import { checkAdmin, checkLogin, isVaildName } from '~~/lib/util';
 
 export default defineEventHandler(async (event) => {
+    checkLogin(event);
+
     const { name, number, teamId } = await readBody(event) as {
         name: string | undefined;
         number: number | undefined;
@@ -34,37 +36,30 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const userId = event.context.userId;
+    const idStr = getRouterParam(event, 'playerId');
 
-    if (!userId) {
-        throw createError({
-            statusCode: 401,
-            message: 'Unauthorized'
-        });
-    }
-
-    const existingPlayer = await prisma.player.findUnique({
-        where: { id: userId },
-        select: { id: true }
-    });
-
-    if (existingPlayer) {
+    if (!idStr || isNaN(parseInt(idStr))) {
         throw createError({
             statusCode: 400,
-            message: 'Player already exists for this user'
+            message: 'Parameter "id" is required'
         });
     }
 
-    const newPlayer = await prisma.player.upsert({
+    const id = parseInt(idStr);
+
+    if (id !== event.context.userId) {
+        checkAdmin(event);
+    }
+
+
+    const newPlayer = await prisma.player.update({
         where: {
-            id: userId, 
+            id
         },
-        update: {},
-        create: {
-            name: name,
-            number: number,
-            teamId: teamId,
-            id: userId,
+        data: {
+            name,
+            number,
+            teamId
         },
         select: {
             id: true,
@@ -74,8 +69,5 @@ export default defineEventHandler(async (event) => {
         },
     });
     
-    return {
-        message: 'Player created successfully',
-        player: newPlayer
-    };
+    return newPlayer;
 });

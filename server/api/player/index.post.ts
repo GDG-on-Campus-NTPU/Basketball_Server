@@ -1,7 +1,10 @@
 import prisma from '~~/lib/prisma';
-import { isVaildName } from '~~/lib/util';
+import { checkLogin, isVaildName } from '~~/lib/util';
 
 export default defineEventHandler(async (event) => {
+    checkLogin(event);
+
+
     const { id, name, number, teamId } = await readBody(event) as {
         id: number | undefined;
         name: string | undefined;
@@ -16,10 +19,17 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    if (name && !isVaildName(name)) {
+    if (!name || !isVaildName(name)) {
         throw createError({
             statusCode: 400,
             message: 'Invalid name'
+        });
+    }
+
+    if (!number) {
+        throw createError({
+            statusCode: 400,
+            message: 'Parameter "number" is required'
         });
     }
 
@@ -28,33 +38,38 @@ export default defineEventHandler(async (event) => {
         select: { id: true }
     });
 
-    if (!existingPlayer) {
+    if (existingPlayer) {
         throw createError({
             statusCode: 404,
-            message: `Player with ID ${id} not found`
+            message: `Player with ID ${id} already exists`
         });
     }
 
-    if (teamId) {
-        const teamExists = await prisma.team.findUnique({
-            where: { id: teamId },
-            select: { id: true }
+    if (!teamId) {
+        throw createError({
+            statusCode: 400,
+            message: 'Parameter "teamId" is required'
         });
-
-        if (!teamExists) {
-            throw createError({
-                statusCode: 404,
-                message: `Team with ID ${teamId} not found`
-            });
-        }
     }
 
-    const updatedPlayer = await prisma.player.update({
-        where: { id },
+    const teamExists = await prisma.team.findUnique({
+        where: { id: teamId },
+        select: { id: true }
+    });
+
+    if (!teamExists) {
+        throw createError({
+            statusCode: 404,
+            message: `Team with ID ${teamId} not found`
+        });
+    }
+
+    const updatedPlayer = await prisma.player.create({
         data: {
-            ...(name && { name }),
-            ...(number && { number }),
-            ...(teamId && { teamId }),
+            id,
+            name,
+            number,
+            teamId,
         },
         select: {
             id: true,

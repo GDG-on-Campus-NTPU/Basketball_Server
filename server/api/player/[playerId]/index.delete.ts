@@ -1,7 +1,11 @@
 import prisma from '~~/lib/prisma';
+import { checkAdmin, checkLogin } from '~~/lib/util';
 export default defineEventHandler(async (event) => {
-    const { playerId } = getQuery(event) as { playerId: string | undefined };
-    if (!playerId || isNaN(parseInt(playerId))) {
+    checkLogin(event);
+
+    const playerIdStr = getRouterParam(event, 'playerId')
+
+    if (!playerIdStr || isNaN(parseInt(playerIdStr))) {
         throw createError({
             statusCode: 400,
             statusMessage: 'Bad Request',
@@ -9,8 +13,14 @@ export default defineEventHandler(async (event) => {
         });
     }
 
+    const playerId = parseInt(playerIdStr);
+
+    if (playerId !== event.context.userId) {
+        checkAdmin(event);
+    }
+
     await prisma.player.delete({
-        where: { id: parseInt(playerId) },
+        where: { id: playerId },
         select: null,
     });
 

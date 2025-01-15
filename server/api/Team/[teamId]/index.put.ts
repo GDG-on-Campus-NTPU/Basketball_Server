@@ -1,15 +1,17 @@
 import prisma from '~~/lib/prisma';
-import { isVaildName } from '~~/lib/util';
+import { checkLogin, isVaildName } from '~~/lib/util';
 
 export default defineEventHandler(async (event) => {
-    const { id, name, win, lose } = await readBody(event) as {
-        id: number;
+    checkLogin(event);
+
+    const teamId = getRouterParam(event, 'teamId');
+    const { name, win, lose } = await readBody(event) as {
         name?: string;
         win?: number;
         lose?: number;
     };
 
-    if (!id) {
+    if (!teamId || isNaN(parseInt(teamId))) {
         throw createError({
             statusCode: 400,
             message: 'Parameter "id" is required',
@@ -17,13 +19,13 @@ export default defineEventHandler(async (event) => {
     }
 
     const existingTeam = await prisma.team.findUnique({
-        where: { id },
+        where: { id: parseInt(teamId) },
     });
 
     if (!existingTeam) {
         throw createError({
             statusCode: 404,
-            message: `Team with ID ${id} does not exist`,
+            message: `Team with ID ${teamId} does not exist`,
         });
     }
 
@@ -35,7 +37,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const updatedTeam = await prisma.team.update({
-        where: { id },
+        where: { id: parseInt(teamId) },
         data: {
             ...(name ? { name } : {}), 
             ...(win !== undefined ? { win } : {}), 
@@ -49,8 +51,5 @@ export default defineEventHandler(async (event) => {
         },
     });
     
-    return {
-        message: 'Team updated successfully',
-        team: updatedTeam,
-    };
+    return updatedTeam;
 });

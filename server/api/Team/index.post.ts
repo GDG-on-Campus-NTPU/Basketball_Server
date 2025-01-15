@@ -51,8 +51,5 @@ export default defineEventHandler(async (event) => {
     });
     
 
-    return {
-        message: 'Team created successfully',
-        team: newTeam
-    };
+    return newTeam;
 });

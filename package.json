@@ -13,14 +13,14 @@
   },
   "dependencies": {
     "@azure/communication-email": "^1.0.0",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^6.2.1",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/otp-generator": "^4.0.2",
     "@types/xlsx": "^0.0.36",
     "jsonwebtoken": "^9.0.2",
     "nitro": "^0.0.0",
     "otp-generator": "^4.0.1",
-    "prisma": "^5.22.0",
+    "prisma": "^6.2.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
   }
 }
